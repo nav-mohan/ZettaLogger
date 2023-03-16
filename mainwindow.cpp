@@ -1,18 +1,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent),m_ui(new Ui::MainWindow),m_databaseConnection(new DatabaseConnection())
+MainWindow::MainWindow(QWidget *parent) : 
+    QMainWindow(parent),
+    m_ui(new Ui::MainWindow),
+    m_databaseConnection(new DatabaseConnection()),
+    m_zettaListenerConnection(new ZettaListenerConnection())
 {
     m_ui->setupUi(this);
-    m_tcpSocket = new QTcpSocket();
-    m_tcpSocket->open(QIODevice::ReadOnly);
 }
 
 MainWindow::~MainWindow()
 {
-    if(m_tcpSocket && m_tcpSocket->isOpen()){
-        m_tcpSocket->close();
-        m_tcpSocket->deleteLater();
+    if(m_zettaListenerConnection){
+        delete m_zettaListenerConnection;
     }
 }
 
@@ -38,5 +39,5 @@ void MainWindow::deleteSocket()
 
 void MainWindow::setMessageQueueKey(int key)
 {
-    m_messageQueueKey = key;
+    m_zettaListenerConnection->m_messageQueueKey = key;
 }

@@ -10,7 +10,7 @@ set(QT_REQUIRED_PACKAGES Core Multimedia Gui Widgets Network)
 find_package(Qt5 REQUIRED COMPONENTS ${QT_REQUIRED_PACKAGES})
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
-set(CPP_SOURCE_FILES main.cpp mainwindow.cpp databaseconnection.cpp)
+set(CPP_SOURCE_FILES main.cpp mainwindow.cpp databaseconnection.cpp zettalistenerconnection.cpp)
 qt_wrap_ui(HEADER_FILES mainwindow.ui)
 add_executable(${PROJECT_NAME} 
 	${CPP_SOURCE_FILES}
