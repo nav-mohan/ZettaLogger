@@ -7,26 +7,29 @@
 #include <memory>
 #include <mysql/jdbc.h>
 #include <QObject>
+#include <QMessageBox>
 
 class DatabaseConnection : public QObject {
 Q_OBJECT
 public:
     explicit DatabaseConnection() : m_connectionStatus(0),m_driver(sql::mysql::get_driver_instance()){;}
-    ~DatabaseConnection(){m_res.reset();m_stmt.reset();m_con.reset(); delete m_url;};
-    void setAuthentication(char *url,std::string user, std::string password, std::string database);
+    ~DatabaseConnection(){m_res.reset();m_stmt.reset();m_con.reset();};
+    void setAuthentication(std::string url,std::string user, std::string password, std::string database);
     void openConnection();
     void welcomeMessage();
     void showTables();
-    void displaySqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber);
-    void displayError(std::string);
+    void prepareSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber);
     bool status(){return m_connectionStatus;}
     void parseResults(int columnIndex);
     void parseResults(std::string columnName);
-    inline void resetResults(){m_res.reset();}
+    void resetResults(){m_res.reset();}
     void closeConnection(){m_res.reset();m_stmt.reset();m_con.reset();}
 
+signals:
+    void signalMessage(QString, QString);
+
 private:
-    char *m_url;
+    std::string m_url;
     std::string m_user;
     std::string m_password;
     std::string m_database;

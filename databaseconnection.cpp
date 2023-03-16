@@ -1,17 +1,17 @@
 #include "databaseconnection.h"
 
-void DatabaseConnection::setAuthentication(char *url,std::string user, std::string password, std::string database)
+void DatabaseConnection::setAuthentication(std::string url,std::string user, std::string password, std::string database)
 {
     if(m_connectionStatus)
     {
-        displayError("#ERR: You need to close the existing connection...");
+        signalMessage("MySQL connection error","#ERR: You need to close the existing connection...");
         return;
     }
     m_url = url;
     m_user = user;
     m_password = password;
     m_database = database;
-
+    openConnection();
 }
 
 void DatabaseConnection::openConnection() {
@@ -23,7 +23,7 @@ void DatabaseConnection::openConnection() {
         m_connectionStatus = 1;
     }
     catch(sql::SQLException &e) {
-        displaySqlException(e,"openConnection",__FILE__,__LINE__);
+        prepareSqlException(e,"openConnection",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -34,7 +34,7 @@ void DatabaseConnection::welcomeMessage() {
         parseResults("_message");
     }
     catch(sql::SQLException &e) {
-        displaySqlException(e,"welcomeMessage",__FILE__,__LINE__);
+        prepareSqlException(e,"welcomeMessage",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -45,7 +45,7 @@ void DatabaseConnection::showTables() {
         parseResults(1);
     }
     catch(sql::SQLException &e) {
-        displaySqlException(e,"showTables",__FILE__,__LINE__);
+        prepareSqlException(e,"showTables",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -61,18 +61,15 @@ void DatabaseConnection::parseResults(std::string columnName) {
 }
 
 
+void DatabaseConnection::prepareSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber) {
+    QString errorInfo = QString ("#ERR: SQLException in %1 (%2) on line %3\n#ERR: %4 (MySQL error code: %5, SQLState: %6)")
+    .arg(fileName.c_str())
+    .arg(functionName.c_str())
+    .arg(lineNumber)
+    .arg(e.what())
+    .arg(e.getErrorCode())
+    .arg(e.getSQLState().c_str());
 
-void DatabaseConnection::displaySqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber) {
-    qDebug("#ERR: SQLException in %s (%s) on line %d",fileName.c_str(),functionName.c_str(),lineNumber);
-    qDebug(
-        "#ERR: %s (MySQL error code: %d, SQLState: %s)",
-        e.what(),
-        e.getErrorCode(),
-        e.getSQLState().c_str()
-        );
+    emit signalMessage("MySQL Connection Error",errorInfo);
 }
 
-void DatabaseConnection::displayError(std::string error)
-{
-    qDebug("%s",error.c_str());
-}

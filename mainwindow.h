@@ -17,9 +17,13 @@ public:
 private slots:
     void on_pushButton_connectDatabase_clicked();
     void on_pushButton_connectZettaListener_clicked();
+    void on_comboBox_connectionType_currentIndexChanged(int);
     void readSocket();
     void deleteSocket();
     void setMessageQueueKey(int);
+    void displayMessage(QString windowTitle, QString windowInfo);
+
+
 
 private:
     Ui::MainWindow *m_ui;
