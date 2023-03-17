@@ -18,7 +18,7 @@ public:
     void openConnection();
     void welcomeMessage();
     void showTables();
-    void prepareSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber);
+    void handleSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber);
     bool status(){return m_connectionStatus;}
     void parseResults(int columnIndex);
     void parseResults(std::string columnName);
@@ -27,7 +27,8 @@ public:
 
 signals:
     void signalMessage(QString, QString);
-
+    void connectionChanged(int);
+    
 private:
     std::string m_url;
     std::string m_user;

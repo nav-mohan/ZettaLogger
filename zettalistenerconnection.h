@@ -7,8 +7,12 @@
 #include <QTcpServer>
 #include <QAbstractSocket>
 
-#define CONNECTIONTYPE_TCPSERVER 0;
-#define CONNECTIONTYPE_SHAREDMEMORY 1;
+#include <sys/ipc.h>
+#include <sys/shm.h>
+
+#define CONNECTIONTYPE_NONE -1
+#define CONNECTIONTYPE_TCPSERVER 0
+#define CONNECTIONTYPE_SHAREDMEMORY 1
 
 class ZettaListenerConnection : public QIODevice {
 Q_OBJECT
@@ -21,6 +25,19 @@ public:
     int m_messageQueueKey;// only one of these will be used at a time. 
     QByteArray *m_buffer;
     int m_connectionType;
+    int m_connectionStatus;
+
+public slots:
+    void changeConnectionType(int);
+    void openConnection(int);
+
+private slots:
+    void establishTcpServer(int port);
+    void accessSharedMemory(int key);
+
+signals:
+    void signalMessage(QString,QString);
+    void connectionChanged(bool,int);
 
 protected:
     qint64 readData(char *data, qint64 maxSize);

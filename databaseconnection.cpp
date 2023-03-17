@@ -19,11 +19,11 @@ void DatabaseConnection::openConnection() {
         m_con.reset(m_driver->connect(m_url,m_user,m_password));
         m_con->setSchema(m_database);//this is the same as executeQuery("USE m_database");
         m_stmt.reset(m_con->createStatement());
-        std::cout << "CLASS CONNECTED!\n";
+        emit signalMessage("MySQL Database connection","Succesfully connected to MySQL Database!");
         m_connectionStatus = 1;
     }
     catch(sql::SQLException &e) {
-        prepareSqlException(e,"openConnection",__FILE__,__LINE__);
+        handleSqlException(e,"openConnection",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -34,7 +34,7 @@ void DatabaseConnection::welcomeMessage() {
         parseResults("_message");
     }
     catch(sql::SQLException &e) {
-        prepareSqlException(e,"welcomeMessage",__FILE__,__LINE__);
+        handleSqlException(e,"welcomeMessage",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -45,7 +45,7 @@ void DatabaseConnection::showTables() {
         parseResults(1);
     }
     catch(sql::SQLException &e) {
-        prepareSqlException(e,"showTables",__FILE__,__LINE__);
+        handleSqlException(e,"showTables",__FILE__,__LINE__);
     }
     resetResults();
 }
@@ -61,7 +61,7 @@ void DatabaseConnection::parseResults(std::string columnName) {
 }
 
 
-void DatabaseConnection::prepareSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber) {
+void DatabaseConnection::handleSqlException(sql::SQLException &e, std::string functionName, std::string fileName, int lineNumber) {
     QString errorInfo = QString ("#ERR: SQLException in %1 (%2) on line %3\n#ERR: %4 (MySQL error code: %5, SQLState: %6)")
     .arg(fileName.c_str())
     .arg(functionName.c_str())
@@ -71,5 +71,10 @@ void DatabaseConnection::prepareSqlException(sql::SQLException &e, std::string f
     .arg(e.getSQLState().c_str());
 
     emit signalMessage("MySQL Connection Error",errorInfo);
+    
+    m_con.reset();
+    m_stmt.reset();
+    m_res.reset();
+    m_connectionStatus=0;
 }
 

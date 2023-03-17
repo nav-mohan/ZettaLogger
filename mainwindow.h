@@ -14,7 +14,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-private slots:
+public slots:
     void on_pushButton_connectDatabase_clicked();
     void on_pushButton_connectZettaListener_clicked();
     void on_comboBox_connectionType_currentIndexChanged(int);
@@ -22,11 +22,15 @@ private slots:
     void deleteSocket();
     void setMessageQueueKey(int);
     void displayMessage(QString windowTitle, QString windowInfo);
-
+    void zettaListenerConnectionChanged(bool,int);
+    void databaseConnectionChanged(bool);
 
 
 private:
     Ui::MainWindow *m_ui;
     DatabaseConnection *m_databaseConnection;
     ZettaListenerConnection *m_zettaListenerConnection;
+    bool m_zettaListenerConnectionStatus;
+    int m_zettaListernConnectionType;
+    bool m_databaseConnectionStatus;
 };

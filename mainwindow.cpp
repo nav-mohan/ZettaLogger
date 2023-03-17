@@ -8,7 +8,58 @@ MainWindow::MainWindow(QWidget *parent) :
     m_zettaListenerConnection(new ZettaListenerConnection())
 {
     m_ui->setupUi(this);
+    
     connect(m_databaseConnection,&DatabaseConnection::signalMessage,this,&MainWindow::displayMessage);
+    connect(m_databaseConnection,&DatabaseConnection::connectionChanged,this,&MainWindow::databaseConnectionChanged);
+    
+    connect(m_zettaListenerConnection,&ZettaListenerConnection::signalMessage,this,&MainWindow::displayMessage);
+    connect(m_zettaListenerConnection,&ZettaListenerConnection::connectionChanged,this,&MainWindow::zettaListenerConnectionChanged);
+
+}
+
+
+void MainWindow::databaseConnectionChanged(bool connectionStatus)
+{
+    m_databaseConnectionStatus = connectionStatus;
+    m_ui->databaseUrlValue->setReadOnly(m_databaseConnectionStatus);
+    m_ui->databaseNameValue->setReadOnly(m_databaseConnectionStatus);
+    m_ui->databaseUsernameValue->setReadOnly(m_databaseConnectionStatus);
+    m_ui->databasePasswordValue->setReadOnly(m_databaseConnectionStatus);
+
+    if(m_databaseConnectionStatus)
+    {
+        m_ui->pushButton_connectDatabase->setText("Disconnect from Database");
+    }
+    else
+    {
+        m_ui->pushButton_connectDatabase->setText("Connect to Database");
+    }
+}
+
+void MainWindow::zettaListenerConnectionChanged(bool connectionStatus, int connectionType)
+{
+    qDebug("ZETTALISTENER CONNECTION CHANGED! %d | %d",connectionStatus,connectionType);
+    m_zettaListenerConnectionStatus = connectionStatus;
+    m_ui->comboBox_connectionType->setDisabled(m_zettaListenerConnectionStatus);
+    m_ui->portSharedMemoryKeyValue->setReadOnly(m_zettaListenerConnectionStatus);
+
+    if(m_zettaListenerConnectionStatus)
+    {
+        m_ui->pushButton_connectZettaListener->setText("Disconnect from Database");
+    }
+    else
+    {
+        m_ui->pushButton_connectZettaListener->setText("Connect to Database");
+    }
+
+    if(connectionType == CONNECTIONTYPE_SHAREDMEMORY)
+    {
+        m_ui->portSharedMemoryKeyLabel->setText("Shared Memory Key");
+    }
+    else if(connectionType == CONNECTIONTYPE_TCPSERVER)
+    {
+        m_ui->portSharedMemoryKeyLabel->setText("TCP Server Port");
+    }
 }
 
 MainWindow::~MainWindow()
@@ -32,15 +83,13 @@ void MainWindow::on_pushButton_connectDatabase_clicked()
 
 void MainWindow::on_pushButton_connectZettaListener_clicked()
 {
-
+    int portOrKey = m_ui->portSharedMemoryKeyValue->text().toInt();
+    m_zettaListenerConnection->openConnection(portOrKey);
 }
 
 void MainWindow::on_comboBox_connectionType_currentIndexChanged(int connectionTypeIndex)
 {
-    if(connectionTypeIndex == 0)
-        m_ui->portSharedMemoryKeyLabel->setText("TCP Server Port");
-    if(connectionTypeIndex == 1)
-        m_ui->portSharedMemoryKeyLabel->setText("Shared Memory Key");
+    m_zettaListenerConnection->changeConnectionType(connectionTypeIndex);
 }
 
 
