@@ -1,3 +1,9 @@
+#if !defined(MAINWINDOW_H)
+#define MAINWINDOW_H
+
+
+
+
 #include <QDebug>
 #include <QDateTime>
 #include <QMainWindow>
@@ -20,13 +26,15 @@ public slots:
     void on_comboBox_connectionType_currentIndexChanged(int);
     void readSocket();
     void deleteSocket();
-    void setMessageQueueKey(int);
     void displayMessage(QString windowTitle, QString windowInfo);
     void zettaListenerConnectionChanged(bool,int);
     void databaseConnectionChanged(bool);
 
-
+#ifdef IS_TESTING
+public:
+#else
 private:
+#endif
     Ui::MainWindow *m_ui;
     DatabaseConnection *m_databaseConnection;
     ZettaListenerConnection *m_zettaListenerConnection;
@@ -34,3 +42,5 @@ private:
     int m_zettaListernConnectionType;
     bool m_databaseConnectionStatus;
 };
+
+#endif // MAINWINDOW_H

@@ -256,7 +256,7 @@
                                 <item row = "1" column="0">
                                     <layout class="QHBoxLayout" name="portSharedMemorySettingsLayout">
                                         <item row="0" column="0">
-                                            <widget class="QLabel" name="portSharedMemoryKeyLabel">
+                                            <widget class="QLabel" name="portNumberLabel">
                                                 <property name="minimumSize">
                                                     <size>
                                                         <width>0</width>
@@ -271,8 +271,37 @@
                                                 </property>
                                             </widget>
                                         </item>
-                                        <item row="1" column="0">
-                                            <widget class="QLineEdit" name="portSharedMemoryKeyValue">
+                                        <item row="0" column="1">
+                                            <widget class="QLineEdit" name="portNumberValue">
+        										<property name="minimumSize">
+		        									<size>
+				        								<width>150</width>
+						        						<height>0</height>
+								        			</size>
+										        </property>
+										        <property name="styleSheet">
+											        <string notr="true"/>
+										        </property>
+                                            </widget>
+                                        </item>
+                                        <item row="0" column="0">
+                                            <widget class="QLabel" name="sharedMemoryKeyLabel">
+                                                <property name="minimumSize">
+                                                    <size>
+                                                        <width>0</width>
+                                                        <height>0</height>
+                                                    </size>
+                                                </property>
+                                                <property name="styleSheet">
+                                                    <string notr="true"/>
+                                                </property>
+                                                <property name="text">
+                                                    <string>Shared Memory Key: </string>
+                                                </property>
+                                            </widget>
+                                        </item>
+                                        <item row="0" column="1">
+                                            <widget class="QLineEdit" name="sharedMemoryKeyValue">
         										<property name="minimumSize">
 		        									<size>
 				        								<width>150</width>

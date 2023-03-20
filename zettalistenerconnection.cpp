@@ -29,20 +29,19 @@ qint64 ZettaListenerConnection::writeData(const char *data, qint64 maxSize)
 
 
 
-void ZettaListenerConnection::openConnection(int portOrKey)
+void ZettaListenerConnection::openConnection(int portNumber)
 {
-    if(m_connectionType == CONNECTIONTYPE_SHAREDMEMORY)
-    {
-        accessSharedMemory(portOrKey);
-        qDebug("Opening SharedMemory: %d",portOrKey);
-    }
-    if(m_connectionType == CONNECTIONTYPE_TCPSERVER)
-    {
-        establishTcpServer(portOrKey);
-        qDebug("Opening Port: %d",portOrKey);
-    }
-    
+    openTcpServer(portNumber);
     m_connectionStatus = 1;
+    emit connectionChanged(m_connectionStatus,m_connectionType);
+    return;
+}
+
+void ZettaListenerConnection::closeConnection()
+{
+    closeTcpServer();
+    m_connectionStatus = 0;
+    m_connectionType = CONNECTIONTYPE_NONE;
     emit connectionChanged(m_connectionStatus,m_connectionType);
     return;
 }
@@ -60,33 +59,17 @@ void ZettaListenerConnection::changeConnectionType(int connectionType)
     return;
 }
 
-
-
-void ZettaListenerConnection::establishTcpServer(int portOrKey)
+void ZettaListenerConnection::openTcpServer(int portNumber)
 {
-
-    qDebug("Opening Port %d...",portOrKey);
+    qDebug("Opening Port %d...",portNumber);
     m_tcpServer = new QTcpServer();
-    if(m_tcpServer->listen(QHostAddress::Any, portOrKey))
+    if(m_tcpServer->listen(QHostAddress::Any, portNumber))
         qDebug("LISTENING...");
 
 }
 
-void ZettaListenerConnection::accessSharedMemory(int portOrKey)
+void ZettaListenerConnection::closeTcpServer()
 {
-    key_t key = ftok("shmfile",portOrKey);
-  
-    // shmget returns an identifier in shmid
-    int shmid = shmget(key,4096,0666|IPC_CREAT);
-  
-    // shmat to attach to shared memory
-    char *str = (char*) shmat(shmid,(void*)0,0);
-  
-    qDebug("Data read from memory: %s\n",str);
-      
-    //detach from shared memory 
-    shmdt(str);
-    
-    // destroy the shared memory
-    shmctl(shmid,IPC_RMID,NULL);
+    qDebug("CLOSING TCPSERVER");
+    m_tcpServer->close();
 }

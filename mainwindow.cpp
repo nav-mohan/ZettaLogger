@@ -8,7 +8,8 @@ MainWindow::MainWindow(QWidget *parent) :
     m_zettaListenerConnection(new ZettaListenerConnection())
 {
     m_ui->setupUi(this);
-    
+    m_ui->sharedMemoryKeyValue->setReadOnly(true);
+    m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
     connect(m_databaseConnection,&DatabaseConnection::signalMessage,this,&MainWindow::displayMessage);
     connect(m_databaseConnection,&DatabaseConnection::connectionChanged,this,&MainWindow::databaseConnectionChanged);
     
@@ -41,25 +42,17 @@ void MainWindow::zettaListenerConnectionChanged(bool connectionStatus, int conne
     qDebug("ZETTALISTENER CONNECTION CHANGED! %d | %d",connectionStatus,connectionType);
     m_zettaListenerConnectionStatus = connectionStatus;
     m_ui->comboBox_connectionType->setDisabled(m_zettaListenerConnectionStatus);
-    m_ui->portSharedMemoryKeyValue->setReadOnly(m_zettaListenerConnectionStatus);
+    m_ui->portNumberValue->setReadOnly(m_zettaListenerConnectionStatus);
 
     if(m_zettaListenerConnectionStatus)
     {
-        m_ui->pushButton_connectZettaListener->setText("Disconnect from Database");
+        m_ui->pushButton_connectZettaListener->setText("Disconnect from ZettaListener");
     }
     else
     {
-        m_ui->pushButton_connectZettaListener->setText("Connect to Database");
+        m_ui->pushButton_connectZettaListener->setText("Connect to ZettaListener");
     }
 
-    if(connectionType == CONNECTIONTYPE_SHAREDMEMORY)
-    {
-        m_ui->portSharedMemoryKeyLabel->setText("Shared Memory Key");
-    }
-    else if(connectionType == CONNECTIONTYPE_TCPSERVER)
-    {
-        m_ui->portSharedMemoryKeyLabel->setText("TCP Server Port");
-    }
 }
 
 MainWindow::~MainWindow()
@@ -83,13 +76,27 @@ void MainWindow::on_pushButton_connectDatabase_clicked()
 
 void MainWindow::on_pushButton_connectZettaListener_clicked()
 {
-    int portOrKey = m_ui->portSharedMemoryKeyValue->text().toInt();
-    m_zettaListenerConnection->openConnection(portOrKey);
+    int portNumber = m_ui->portNumberValue->text().toInt();
+    if(!m_zettaListenerConnectionStatus)
+        m_zettaListenerConnection->openConnection(portNumber);
+    else
+        m_zettaListenerConnection->closeConnection();
 }
 
 void MainWindow::on_comboBox_connectionType_currentIndexChanged(int connectionTypeIndex)
 {
     m_zettaListenerConnection->changeConnectionType(connectionTypeIndex);
+    if(connectionTypeIndex == CONNECTIONTYPE_SHAREDMEMORY)
+    {
+        m_ui->sharedMemoryKeyValue->setReadOnly(false);
+        m_ui->sharedMemoryKeyValue->setPlaceholderText("Enter Unique String");
+
+    }
+    else if(connectionTypeIndex == CONNECTIONTYPE_TCPSERVER)
+    {
+        m_ui->sharedMemoryKeyValue->setReadOnly(true);
+        m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
+    }
 }
 
 
@@ -102,13 +109,6 @@ void MainWindow::deleteSocket()
 {
 
 }
-
-void MainWindow::setMessageQueueKey(int key)
-{
-    m_zettaListenerConnection->m_messageQueueKey = key;
-}
-
-
 
 void MainWindow::displayMessage(QString windowTitle, QString windowInfo)
 {

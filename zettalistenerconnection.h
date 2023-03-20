@@ -6,9 +6,8 @@
 #include <QTcpSocket>
 #include <QTcpServer>
 #include <QAbstractSocket>
+#include <QSharedMemory>
 
-#include <sys/ipc.h>
-#include <sys/shm.h>
 
 #define CONNECTIONTYPE_NONE -1
 #define CONNECTIONTYPE_TCPSERVER 0
@@ -21,8 +20,8 @@ public:
     ZettaListenerConnection();
     ~ZettaListenerConnection();
 
-    QTcpServer *m_tcpServer;// only one of these will be used at a time. 
-    int m_messageQueueKey;// only one of these will be used at a time. 
+    QTcpServer *m_tcpServer;// the tcp server will at the very least be used for receiving readyRead signals. 
+    QSharedMemory *m_sharedMemory;
     QByteArray *m_buffer;
     int m_connectionType;
     int m_connectionStatus;
@@ -30,10 +29,11 @@ public:
 public slots:
     void changeConnectionType(int);
     void openConnection(int);
+    void closeConnection();
 
 private slots:
-    void establishTcpServer(int port);
-    void accessSharedMemory(int key);
+    void openTcpServer(int port);
+    void closeTcpServer();
 
 signals:
     void signalMessage(QString,QString);
@@ -42,6 +42,9 @@ signals:
 protected:
     qint64 readData(char *data, qint64 maxSize);
     qint64 writeData(const char *data, qint64 maxSize);
+
+private:
+    int m_tcpPortNumber;
 };
 
 #endif // ZETTALISTENERCONNECTION_H

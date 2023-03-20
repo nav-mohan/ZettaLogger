@@ -17,9 +17,13 @@ add_executable(${PROJECT_NAME}
 	${HEADER_FILES}
 	)
 
-target_include_directories(${PROJECT_NAME} PUBLIC /usr/local/mysql-connector-c++-8.0.32/include)
+target_include_directories(
+    ${PROJECT_NAME} PUBLIC 
+    /usr/local/mysql-connector-c++-8.0.32/include
+    )
 
 target_link_libraries(
     ${PROJECT_NAME} PUBLIC
     Qt5::Core Qt5::Gui Qt5::Multimedia Qt5::Widgets Qt5::Network
-    /usr/local/mysql-connector-c++-8.0.32/lib64/libmysqlcppconn.dylib)
+    /usr/local/mysql-connector-c++-8.0.32/lib64/libmysqlcppconn.dylib
+    )
