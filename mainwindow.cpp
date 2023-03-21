@@ -5,17 +5,26 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     m_ui(new Ui::MainWindow),
     m_databaseConnection(new DatabaseConnection()),
-    m_zettaListenerConnection(new ZettaListenerConnection())
+    m_zettaListenerConnection(new ZettaListenerConnection()),
+    m_httpServer(new HttpServer())
 {
     m_ui->setupUi(this);
     m_ui->sharedMemoryKeyValue->setReadOnly(true);
     m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
     connect(m_databaseConnection,&DatabaseConnection::signalMessage,this,&MainWindow::displayMessage);
     connect(m_databaseConnection,&DatabaseConnection::connectionChanged,this,&MainWindow::databaseConnectionChanged);
-    
+    m_ui->comboBox_connectionType->setPlaceholderText("ZettaListener Connection Type");
     connect(m_zettaListenerConnection,&ZettaListenerConnection::signalMessage,this,&MainWindow::displayMessage);
     connect(m_zettaListenerConnection,&ZettaListenerConnection::connectionChanged,this,&MainWindow::zettaListenerConnectionChanged);
+    m_ui->plainTextEdit_receivedLogs->setReadOnly(true);
+    m_ui->plainTextEdit_receivedLogs->setPlaceholderText("Received Logs:\n");
+    // m_ui->plainTextEdit_receivedLogs->insertPlainText("Received Logs:\n");
+}
 
+
+void MainWindow::on_pushButton_clearLogs_clicked()
+{
+    m_ui->plainTextEdit_receivedLogs->setPlainText("");
 }
 
 
@@ -99,7 +108,6 @@ void MainWindow::on_comboBox_connectionType_currentIndexChanged(int connectionTy
     }
 }
 
-
 void MainWindow::readSocket()
 {
 
@@ -120,4 +128,13 @@ void MainWindow::displayMessage(QString windowTitle, QString windowInfo)
     msgBox.setStandardButtons(QMessageBox::Close);
     msgBox.setDefaultButton(QMessageBox::Close);
     msgBox.exec();
+}
+
+void MainWindow::on_pushButton_startWebApi_clicked()
+{
+    int portNumber = m_ui->webApiPortValue->text().toInt();
+    QString endpoint = m_ui->webApiEndpointValue->text();
+    qDebug() << portNumber << endpoint;
+    m_httpServer->initialize(portNumber);
+
 }

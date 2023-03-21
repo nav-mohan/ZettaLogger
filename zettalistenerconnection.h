@@ -8,7 +8,6 @@
 #include <QAbstractSocket>
 #include <QSharedMemory>
 
-
 #define CONNECTIONTYPE_NONE -1
 #define CONNECTIONTYPE_TCPSERVER 0
 #define CONNECTIONTYPE_SHAREDMEMORY 1

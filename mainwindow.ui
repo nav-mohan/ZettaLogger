@@ -35,7 +35,7 @@
 					</widget>
 				</item>
 				<item row="1" column="0">
-					<widget class="QTextBrowser" name="textBrowser_receivedMessages">
+					<widget class="QPlainTextEdit" name="plainTextEdit_receivedLogs">
 						<property name="styleSheet">
 							<string notr="true"/>
 						</property>
@@ -43,7 +43,7 @@
 				</item>
 				<item row="2" column="0">
 					<layout class="QVBoxLayout" name="connectionSettingsLayout">
-						<item row="2" column="0">
+						<item row="0" column="0">
 					        <layout class="QVBoxLayout" name="databaseConnectionSettingsLayout">
                                 <item row="0" column="0">
                                     <widget class = "QLabel" name = "">
@@ -211,7 +211,7 @@
                                 </item>
                             </layout>
 						</item>
-						<item row="3" column="0">
+						<item row="1" column="0">
                             <layout class="QVBoxLayout" name="zettaListenerConnectionSettingsLayout">
                                 <item row="0" column="0">
                                     <layout class="QHBoxLayout" name="zettaListenerConnectionTypeSettingsLayout">
@@ -330,6 +330,108 @@
                                 </item>
                             </layout>
 						</item>                        
+					</layout>
+				</item>
+				<item row ="3" column="0">
+					<layout class = "QVBoxLayout" name = "webApiSettingsLayout">
+						<item row="0" column="0">
+							<widget class = "QLabel" name = "">
+								<property name="minimumSize">
+									<size>
+										<width>0</width>
+										<height>0</height>
+									</size>
+								</property>
+								<property name="styleSheet">
+									<string notr="true"/>
+								</property>
+								<property name="text">
+									<string>Web API Settings</string>
+								</property>
+							</widget>
+						</item>
+						<item row="1" column="0">
+							<layout class="QHBoxLayout" name="webApiPortLayout">
+								<item row="0" column="0">
+									<widget class = "QLabel" name = "webApiPortLabel">
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>0</height>
+											</size>
+										</property>
+										<property name="styleSheet">
+											<string notr="true"/>
+										</property>
+										<property name="text">
+											<string>Port</string>
+										</property>
+									</widget>
+								</item>
+								<item row="1" column="1">
+									<widget class = "QLineEdit" name = "webApiPortValue">
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>0</height>
+											</size>
+										</property>
+										<property name="styleSheet">
+											<string notr="true"/>
+										</property>
+									</widget>
+								</item>
+							</layout>
+						</item>
+						<item row="2" column="0">
+							<layout class="QHBoxLayout" name="webApiEndpointLayout">
+								<item row="0" column="0">
+									<widget class = "QLabel" name = "webApiEndpointLabel">
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>0</height>
+											</size>
+										</property>
+										<property name="styleSheet">
+											<string notr="true"/>
+										</property>
+										<property name="text">
+											<string>Endpoint</string>
+										</property>
+									</widget>
+								</item>
+								<item row="1" column="1">
+									<widget class = "QLineEdit" name = "webApiEndpointValue">
+										<property name="minimumSize">
+											<size>
+												<width>0</width>
+												<height>0</height>
+											</size>
+										</property>
+										<property name="styleSheet">
+											<string notr="true"/>
+										</property>
+									</widget>
+								</item>
+							</layout>
+						</item>
+						<item row="3" column="0">
+							<widget class = "QPushButton" name="pushButton_startWebApi">
+								<property name="minimumSize">
+									<size>
+										<width>0</width>
+										<height>0</height>
+									</size>
+								</property>
+								<property name="styleSheet">
+									<string notr="true"/>
+								</property>
+								<property name="text">
+									<string>Start Web API</string>
+								</property>
+							</widget>
+						</item>
 					</layout>
 				</item>
 			</layout>

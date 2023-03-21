@@ -9,6 +9,8 @@
 #include <QPushButton>
 #include <QListWidget>
 #include <QApplication>
+#include <QLineEdit>
+#include <QPlainTextEdit>
 
 class TestMainWindow : public QObject {
 Q_OBJECT
@@ -18,19 +20,39 @@ public:
 
 private:
     MainWindow *m_win;
-    QComboBox *m_deviceOptions;
-    QPushButton *m_addMountpoint;
-    QListWidget *m_mountpointList;
+    QPushButton *m_clearLogs;
+    QPlainTextEdit *m_receivedLogs;
+    QLineEdit *m_databaseUrl, *m_databaseName, *m_databaseUsername, *m_databasePassword;
+    QPushButton *m_connectToDatabase;
+    QComboBox *m_zettaListenerConnectionOptions;
+    QLineEdit *m_tcpServerPort, *m_sharedMemoryKey;
+    QPushButton *m_connectToZettaListener;
     ZettaListenerConnection *m_zettaListenerConnection = nullptr;
+    DatabaseConnection *m_databaseConnection = nullptr;
+    bool m_zettaListenerConnectionStatus;
+    int m_zettaListernConnectionType;
+    bool m_databaseConnectionStatus;
 
 private slots:
     void initTestCase()
     {
         m_win = new MainWindow();
-        QCOMPARE(m_zettaListenerConnection,nullptr);
+        m_clearLogs = m_win->findChild<QPushButton*>("pushButton_clearLogs");
+        m_receivedLogs = m_win->findChild<QPlainTextEdit*>("plainTextEdit_receivedLogs");
+        m_databaseUrl = m_win->findChild<QLineEdit*>("databaseUrlValue");
+        m_databaseName = m_win->findChild<QLineEdit*>("databaseNameValue");
+        m_databaseUsername = m_win->findChild<QLineEdit*>("databaseUsernameValue");
+        m_databasePassword = m_win->findChild<QLineEdit*>("databasePasswordValue");
+        m_connectToDatabase = m_win->findChild<QPushButton*>("pushButton_connectDatabase");
+        m_zettaListenerConnectionOptions = m_win->findChild<QComboBox*>("comboBox_connectionType");
+        m_tcpServerPort = m_win->findChild<QLineEdit*>("portNumberValue");
+        m_sharedMemoryKey = m_win->findChild<QLineEdit*>("sharedMemoryKeyValue");
+        m_connectToZettaListener = m_win->findChild<QPushButton*>("pushButton_connectZettaListener");
         m_zettaListenerConnection = m_win->m_zettaListenerConnection;
-        qDebug() << m_zettaListenerConnection;
-        QCOMPARE(m_zettaListenerConnection,nullptr);
+        m_databaseConnection = m_win->m_databaseConnection;
+        m_zettaListenerConnectionStatus = m_win->m_zettaListenerConnectionStatus;
+        m_zettaListernConnectionType = m_win->m_zettaListernConnectionType;
+        m_databaseConnectionStatus = m_win->m_databaseConnectionStatus;
     }
 
     void verify_windowTitle_value()
@@ -39,32 +61,30 @@ private slots:
         QCOMPARE(windowTitle, "QZettaLogger");
     }
 
-    // void verify_deviceOptions_initialized()
-    // {
-    //     m_deviceOptions = m_win->findChild<QComboBox*>("deviceOptions");
-    //     if(m_deviceOptions->count()==0)
-    //         qWarning() << "No input devices. Some test results might be unrealiable.";
-    //     QVERIFY(m_deviceOptions->property("placeholderText")=="Audio Input Device");
-    // }
+    void verify_window_initialized()
+    {
+        QCOMPARE(m_receivedLogs->toPlainText(),"");
+        QCOMPARE(m_receivedLogs->placeholderText(),"Received Logs:\n");
+        QCOMPARE(m_databaseUrl->text(),"");
+        QCOMPARE(m_databaseName->text(),"");
+        QCOMPARE(m_databaseUsername->text(),"");
+        QCOMPARE(m_databasePassword->text(),"");
+        QCOMPARE(m_tcpServerPort->text(),"");
+        QCOMPARE(m_tcpServerPort->placeholderText(),"");
+        QCOMPARE(m_sharedMemoryKey->text(),"");
+        QCOMPARE(m_sharedMemoryKey->placeholderText(),"N/A");
+        QCOMPARE(m_zettaListenerConnectionOptions->placeholderText(),"ZettaListener Connection Type");
+        QCOMPARE(m_zettaListenerConnectionOptions->count(),2);
+    }
+
+    void verify_pushButton_clearLogs()
+    {
+        m_receivedLogs->insertPlainText("RECEIVED LOGS");
+        QCOMPARE(m_receivedLogs->toPlainText(),"RECEIVED LOGS");
+        m_clearLogs->click();
+        QCOMPARE(m_receivedLogs->toPlainText(),"");
+    }
     
-    // void verify_addMountpoint_initialized()
-    // {
-    //     m_addMountpoint = m_win->findChild<QPushButton*>("addMountpoint");
-    //     QString buttonText = m_addMountpoint->property("text").toString();
-    //     QVERIFY(buttonText == "Add Mount Point");
-    // }
-
-    // void verify_mountpointList_initialized()
-    // {
-    //     m_mountpointList = m_win->findChild<QListWidget*>("mountpointList");
-    //     QVERIFY(m_mountpointList->count()==0);
-    // }
-
-    // void verify_mountpointSettingDialog_popup()
-    // {
-    //     QTest::mouseClick(m_addMountpoint,Qt::LeftButton);
-    // }
-
 };
 
 #endif // MAINWINDOW_TESTS_H
