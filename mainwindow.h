@@ -8,6 +8,7 @@
 #include "zettalistenerconnection.h"
 #include "databaseconnection.h"
 #include "httpserver.h"
+#include "dbcon.h"
 
 namespace Ui {class MainWindow;}
 
@@ -29,7 +30,8 @@ public slots:
     void displayMessage(QString windowTitle, QString windowInfo);
     void zettaListenerConnectionChanged(bool,int);
     void databaseConnectionChanged(bool);
-
+    void httpServerConnectionChanged(bool);
+    
 #ifdef IS_TESTING
 public:
 #else
@@ -39,9 +41,11 @@ private:
     DatabaseConnection *m_databaseConnection;
     ZettaListenerConnection *m_zettaListenerConnection;
     HttpServer *m_httpServer;
-    bool m_zettaListenerConnectionStatus;
+    DbCon *m_dbCon;
     int m_zettaListernConnectionType;
+    bool m_zettaListenerConnectionStatus;
     bool m_databaseConnectionStatus;
+    bool m_httpServerConnectionStatus;
 };
 
 #endif // MAINWINDOW_H

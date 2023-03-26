@@ -77,4 +77,3 @@ void DatabaseConnection::handleSqlException(sql::SQLException &e, std::string fu
     m_res.reset();
     m_connectionStatus=0;
 }
-

@@ -1,11 +1,9 @@
 #include "httpserver.h"
 
-
 HttpServer::HttpServer()
 {
     m_tcpServer = new QTcpServer();
     connect(m_tcpServer, &QTcpServer::newConnection, this, &HttpServer::newConnection);
-    initialize(10000);
 }
 
 
@@ -15,14 +13,29 @@ HttpServer::~HttpServer()
     if(m_tcpServer)
     {
         m_tcpServer->close();
+        emit connectionChanged(false);
         delete m_tcpServer;
     }
+}
+
+void HttpServer::close()
+{
+    emit connectionChanged(false);
+    m_tcpServer->close();
 }
 
 void HttpServer::initialize(int portNumber)
 {
     if(m_tcpServer->listen(QHostAddress::Any, portNumber))
+    {
         qDebug("LISTENING...");
+        emit connectionChanged(true);
+    }
+    else
+    {
+        qDebug("DISCONNECTED...");
+        emit connectionChanged(false);
+    }
 }
 
 

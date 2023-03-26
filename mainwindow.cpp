@@ -6,21 +6,29 @@ MainWindow::MainWindow(QWidget *parent) :
     m_ui(new Ui::MainWindow),
     m_databaseConnection(new DatabaseConnection()),
     m_zettaListenerConnection(new ZettaListenerConnection()),
-    m_httpServer(new HttpServer())
+    m_httpServer(new HttpServer()),
+    m_dbCon(new DbCon()),
+    m_zettaListenerConnectionStatus(0),
+    m_zettaListernConnectionType(CONNECTIONTYPE_TCPSERVER),
+    m_databaseConnectionStatus(false),
+    m_httpServerConnectionStatus(false)
 {
     m_ui->setupUi(this);
     m_ui->sharedMemoryKeyValue->setReadOnly(true);
     m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
     connect(m_databaseConnection,&DatabaseConnection::signalMessage,this,&MainWindow::displayMessage);
     connect(m_databaseConnection,&DatabaseConnection::connectionChanged,this,&MainWindow::databaseConnectionChanged);
-    m_ui->comboBox_connectionType->setPlaceholderText("ZettaListener Connection Type");
     connect(m_zettaListenerConnection,&ZettaListenerConnection::signalMessage,this,&MainWindow::displayMessage);
     connect(m_zettaListenerConnection,&ZettaListenerConnection::connectionChanged,this,&MainWindow::zettaListenerConnectionChanged);
+    connect(m_httpServer,&HttpServer::connectionChanged,this,&MainWindow::httpServerConnectionChanged);
     m_ui->plainTextEdit_receivedLogs->setReadOnly(true);
     m_ui->plainTextEdit_receivedLogs->setPlaceholderText("Received Logs:\n");
     // m_ui->plainTextEdit_receivedLogs->insertPlainText("Received Logs:\n");
-}
+    m_dbCon->setAuth("H","H","H","h");
+    m_dbCon->openConnection();
+    qDebug() << m_dbCon->connectionStatus();
 
+}
 
 void MainWindow::on_pushButton_clearLogs_clicked()
 {
@@ -30,6 +38,7 @@ void MainWindow::on_pushButton_clearLogs_clicked()
 
 void MainWindow::databaseConnectionChanged(bool connectionStatus)
 {
+    qDebug("DATABASE CONNECTION CHANGED! %d",connectionStatus);
     m_databaseConnectionStatus = connectionStatus;
     m_ui->databaseUrlValue->setReadOnly(m_databaseConnectionStatus);
     m_ui->databaseNameValue->setReadOnly(m_databaseConnectionStatus);
@@ -46,22 +55,20 @@ void MainWindow::databaseConnectionChanged(bool connectionStatus)
     }
 }
 
-void MainWindow::zettaListenerConnectionChanged(bool connectionStatus, int connectionType)
+void MainWindow::httpServerConnectionChanged(bool connectionStatus)
 {
-    qDebug("ZETTALISTENER CONNECTION CHANGED! %d | %d",connectionStatus,connectionType);
-    m_zettaListenerConnectionStatus = connectionStatus;
-    m_ui->comboBox_connectionType->setDisabled(m_zettaListenerConnectionStatus);
-    m_ui->portNumberValue->setReadOnly(m_zettaListenerConnectionStatus);
-
-    if(m_zettaListenerConnectionStatus)
+    qDebug("HTTPSERVER CONNECTION CHANGED! %d",connectionStatus);
+    m_httpServerConnectionStatus = connectionStatus;
+    m_ui->webApiPortValue->setReadOnly(connectionStatus);
+    m_ui->webApiEndpointValue->setReadOnly(connectionStatus);
+    if(connectionStatus)
     {
-        m_ui->pushButton_connectZettaListener->setText("Disconnect from ZettaListener");
+        m_ui->pushButton_startWebApi->setText("Close Web API");
     }
     else
     {
-        m_ui->pushButton_connectZettaListener->setText("Connect to ZettaListener");
+        m_ui->pushButton_startWebApi->setText("Start Web API");
     }
-
 }
 
 MainWindow::~MainWindow()
@@ -83,30 +90,6 @@ void MainWindow::on_pushButton_connectDatabase_clicked()
 
 }
 
-void MainWindow::on_pushButton_connectZettaListener_clicked()
-{
-    int portNumber = m_ui->portNumberValue->text().toInt();
-    if(!m_zettaListenerConnectionStatus)
-        m_zettaListenerConnection->openConnection(portNumber);
-    else
-        m_zettaListenerConnection->closeConnection();
-}
-
-void MainWindow::on_comboBox_connectionType_currentIndexChanged(int connectionTypeIndex)
-{
-    m_zettaListenerConnection->changeConnectionType(connectionTypeIndex);
-    if(connectionTypeIndex == CONNECTIONTYPE_SHAREDMEMORY)
-    {
-        m_ui->sharedMemoryKeyValue->setReadOnly(false);
-        m_ui->sharedMemoryKeyValue->setPlaceholderText("Enter Unique String");
-
-    }
-    else if(connectionTypeIndex == CONNECTIONTYPE_TCPSERVER)
-    {
-        m_ui->sharedMemoryKeyValue->setReadOnly(true);
-        m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
-    }
-}
 
 void MainWindow::readSocket()
 {
@@ -135,6 +118,65 @@ void MainWindow::on_pushButton_startWebApi_clicked()
     int portNumber = m_ui->webApiPortValue->text().toInt();
     QString endpoint = m_ui->webApiEndpointValue->text();
     qDebug() << portNumber << endpoint;
-    m_httpServer->initialize(portNumber);
+    if(!m_httpServerConnectionStatus)
+        m_httpServer->initialize(portNumber);
+    else
+        m_httpServer->close();
+}
 
+
+
+
+
+
+
+
+
+
+// ZettaListener Connection Settings
+void MainWindow::zettaListenerConnectionChanged(bool connectionStatus, int connectionTypeIndex)
+{
+    qDebug("ZETTALISTENER CONNECTION CHANGED! %d | %d",connectionStatus,connectionTypeIndex);
+    m_zettaListernConnectionType = connectionTypeIndex;
+    m_zettaListenerConnectionStatus = connectionStatus;
+    m_ui->comboBox_connectionType->setDisabled(m_zettaListenerConnectionStatus);
+    m_ui->portNumberValue->setReadOnly(m_zettaListenerConnectionStatus);
+
+    if(m_zettaListenerConnectionStatus)
+    {
+        m_ui->pushButton_connectZettaListener->setText("Disconnect from ZettaListener");
+    }
+    else
+    {
+        m_ui->pushButton_connectZettaListener->setText("Connect to ZettaListener");
+    }
+    if(connectionTypeIndex == CONNECTIONTYPE_SHAREDMEMORY)
+    {
+        m_ui->sharedMemoryKeyValue->setReadOnly(false);
+        m_ui->sharedMemoryKeyValue->setPlaceholderText("Enter Unique String");
+    }
+    else if(connectionTypeIndex == CONNECTIONTYPE_TCPSERVER)
+    {
+        m_ui->sharedMemoryKeyValue->setReadOnly(true);
+        m_ui->sharedMemoryKeyValue->setPlaceholderText("N/A");
+    }
+}
+
+void MainWindow::on_pushButton_connectZettaListener_clicked()
+{
+    qDebug("Oepning zetta listener connection %d,%d",m_zettaListenerConnectionStatus,m_zettaListernConnectionType);
+    int portNumber = m_ui->portNumberValue->text().toInt();
+    if(!m_zettaListenerConnectionStatus){
+        qDebug("Opening ZettaListern %d",portNumber);
+        m_zettaListenerConnection->openConnection(portNumber);
+    }
+    else{
+        qDebug("Closing ZettaListern %d",portNumber);
+        m_zettaListenerConnection->closeConnection();
+    }
+}
+
+void MainWindow::on_comboBox_connectionType_currentIndexChanged(int connectionTypeIndex)
+{
+    m_zettaListenerConnection->changeConnectionType(connectionTypeIndex);
 }

@@ -25,6 +25,7 @@ public:
     void resetResults(){m_res.reset();}
     void closeConnection(){m_res.reset();m_stmt.reset();m_con.reset();}
 
+
 signals:
     void signalMessage(QString, QString);
     void connectionChanged(int);

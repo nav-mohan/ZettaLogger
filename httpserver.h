@@ -18,6 +18,7 @@ public:
     ~HttpServer();
 
     void initialize(int portNumber);
+    void close();
     void appendToSocketList(QTcpSocket *socket);
 
 public slots:
@@ -28,6 +29,9 @@ public slots:
 private:
     QTcpServer *m_tcpServer;
     QSet<QTcpSocket*> m_connectionSet;
+
+signals:
+    void connectionChanged(bool connectionStatus);
 };
 
 #endif // HTTPSERVER_H
