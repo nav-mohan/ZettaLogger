@@ -11,6 +11,7 @@
 #include <QMessageBox>
 #include <boost/mysql.hpp>
 
+#include "record.h"
 
 class DbCon : public QObject {
 Q_OBJECT
@@ -22,7 +23,7 @@ public:
     void openConnection();
     bool connectionStatus();
     void countRecords();
-    void insertRecord();
+    void insertRecord(QMap<QString,QString> &map);
 
     void handleSqlException(const boost::mysql::error_with_diagnostics& err);
     void handleStandardException(const std::exception &err);
@@ -33,7 +34,14 @@ public:
 
     boost::mysql::tcp_ssl_connection *m_conn; // a single tcp connection
     boost::mysql::results m_result;
-    boost::mysql::statement m_recordInserStatement;
+    boost::mysql::statement m_recordInsertStatement;
+    boost::mysql::statement ps;
+
+signals:
+    void alert(const QString &windowTitle, const QString &windowInfo);
+    void appendLog(const QString &str);
+    void connectionChanged(int);
+
 };
 
 #endif // DBCON_H

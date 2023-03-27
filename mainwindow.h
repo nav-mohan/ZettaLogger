@@ -6,9 +6,10 @@
 #include <QMainWindow>
 
 #include "zettalistenerconnection.h"
-#include "databaseconnection.h"
 #include "httpserver.h"
 #include "dbcon.h"
+
+#include "record.h"
 
 namespace Ui {class MainWindow;}
 
@@ -21,16 +22,18 @@ public:
 
 public slots:
     void on_pushButton_clearLogs_clicked();
-    void on_pushButton_connectDatabase_clicked();
+    void alert(const QString &windowTitle, const QString &windowInfo);
+    
+    void zettaListenerConnectionChanged(bool,int);
     void on_pushButton_connectZettaListener_clicked();
     void on_comboBox_connectionType_currentIndexChanged(int);
-    void on_pushButton_startWebApi_clicked();
-    void readSocket();
-    void deleteSocket();
-    void displayMessage(QString windowTitle, QString windowInfo);
-    void zettaListenerConnectionChanged(bool,int);
+    
+    void on_pushButton_connectDatabase_clicked();
     void databaseConnectionChanged(bool);
+    
     void httpServerConnectionChanged(bool);
+    void on_pushButton_startWebApi_clicked();
+    void appendLog(const QString& str);
     
 #ifdef IS_TESTING
 public:
@@ -38,7 +41,6 @@ public:
 private:
 #endif
     Ui::MainWindow *m_ui;
-    DatabaseConnection *m_databaseConnection;
     ZettaListenerConnection *m_zettaListenerConnection;
     HttpServer *m_httpServer;
     DbCon *m_dbCon;

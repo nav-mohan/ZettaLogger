@@ -9,6 +9,13 @@ DROP DATABASE IF EXISTS zettalogger;
 CREATE DATABASE zettalogger;
 USE zettalogger;
 
+-- User
+DROP USER IF EXISTS 'zettalogger_user'@'%';
+CREATE USER 'zettalogger_user'@'%' IDENTIFIED WITH 'mysql_native_password';
+ALTER USER 'zettalogger_user'@'%' IDENTIFIED BY 'zettalogger_password';
+GRANT ALL PRIVILEGES ON zettalogger.* TO 'zettalogger_user'@'%';
+FLUSH PRIVILEGES;
+
 -- Tables
 CREATE TABLE zettalogger (
     rw_event_id INTEGER NOT NULL AUTO_INCREMENT,
@@ -20,6 +27,8 @@ CREATE TABLE zettalogger (
     air_stop_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     air_date DATE NOT NULL,
     asset_id INTEGER,
+    asset_type_id INTEGER,
+    asset_type_name VARCHAR(255),
     asset_filename VARCHAR(255),
     asset_participant_name VARCHAR(255),
     asset_participant_id INTEGER,
@@ -43,33 +52,3 @@ CREATE TABLE zettalogger (
     title VARCHAR(255),
     PRIMARY KEY (rw_event_id)
 );
-
--- CREATE TABLE employee(
---     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
---     first_name VARCHAR(100) NOT NULL,
---     last_name VARCHAR(100) NOT NULL,
---     salary DOUBLE,
---     company_id CHAR(10) NOT NULL,
---     FOREIGN KEY (company_id) REFERENCES company(id)
--- );
-    
--- INSERT INTO company (name, id) VALUES
---     ("Award Winning Company, Inc.", "AWC"),
---     ("Sector Global Leader Plc", "SGL"),
---     ("High Growth Startup, Ltd", "HGS")
--- ;
--- INSERT INTO employee (first_name, last_name, salary, company_id) VALUES
---     ("Efficient", "Developer", 30000, "AWC"),
---     ("Lazy", "Manager", 80000, "AWC"),
---     ("Good", "Team Player", 35000, "HGS"),
---     ("Enormous", "Slacker", 45000, "SGL"),
---     ("Coffee", "Drinker", 30000, "HGS"),
---     ("Underpaid", "Intern", 15000, "AWC")
--- ;
-
--- User
-DROP USER IF EXISTS 'zettalogger_user'@'%';
-CREATE USER 'zettalogger_user'@'%' IDENTIFIED WITH 'mysql_native_password';
-ALTER USER 'zettalogger_user'@'%' IDENTIFIED BY 'zettalogger_password';
-GRANT ALL PRIVILEGES ON zettalogger.* TO 'zettalogger_user'@'%';
-FLUSH PRIVILEGES;

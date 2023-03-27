@@ -1,12 +1,13 @@
 #include "zettalistenerconnection.h"
 
-ZettaListenerConnection::ZettaListenerConnection()
+ZettaListenerConnection::ZettaListenerConnection():
+m_connectionStatus(false),
+m_connectionType(CONNECTIONTYPE_TCPSERVER),
+m_tcpServer(new QTcpServer())
 {
-    m_connectionStatus = false;
-    m_connectionType = CONNECTIONTYPE_TCPSERVER;
     emit connectionChanged(m_connectionStatus,m_connectionType);
     qDebug("ZettaListenerConnection::ZettaListenerConnection %d,%d",m_connectionStatus,m_connectionType);
-
+    connect(m_tcpServer, &QTcpServer::newConnection, this, &ZettaListenerConnection::newConnection);
 }
 
 ZettaListenerConnection::~ZettaListenerConnection()
@@ -15,30 +16,46 @@ ZettaListenerConnection::~ZettaListenerConnection()
     // delete m_buffer;
 }
 
-
-qint64 ZettaListenerConnection::readData(char *data, qint64 maxSize)
+void ZettaListenerConnection::newConnection()
 {
-    return maxSize;
+    qDebug() << "New connection detected!!";
+    emit appendLog(QString("%1 :: New message stream arriving").arg(QDateTime::currentDateTime().toString("yyyy-MM-dd hh:mm:ss")));
+    while(m_tcpServer->hasPendingConnections())
+        appendToSocketList(m_tcpServer->nextPendingConnection());
 }
 
-qint64 ZettaListenerConnection::writeData(const char *data, qint64 maxSize)
+void ZettaListenerConnection::appendToSocketList(QTcpSocket *socket)
 {
-    return maxSize;
+    m_connectionSet.insert(socket);
+    connect(socket,&QTcpSocket::readyRead, this, &ZettaListenerConnection::readSocket);
+    connect(socket,&QTcpSocket::disconnected, this, &ZettaListenerConnection::deleteSocket);
 }
 
-
-void ZettaListenerConnection::openConnection(int portNumber)
+void ZettaListenerConnection::readSocket()
 {
-    openTcpServer(portNumber);
-    return;
+    qDebug() << "Reading " << sender();
+    QTcpSocket *socket = reinterpret_cast<QTcpSocket*>(sender());
+    int bytesAvailable = socket->bytesAvailable();
+    QByteArray newData = socket->readAll();
+    m_buffer.append(newData);
 }
 
-void ZettaListenerConnection::closeConnection()
+void ZettaListenerConnection::deleteSocket()
 {
-    closeTcpServer();
-    m_connectionStatus = 0;
-    emit connectionChanged(m_connectionStatus,m_connectionType);
-    return;
+    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+    QSet<QTcpSocket*>::iterator it = m_connectionSet.find(socket);
+    if (it != m_connectionSet.end()){
+        emit appendLog(QString("INFO :: A client has just left the room %1").arg(socket->socketDescriptor()));
+        m_connectionSet.remove(*it);
+    }
+    qDebug() << "Deleting " << sender();
+    QMap<QString,QString> map;
+    QDataStream stream(&m_buffer, QIODevice::ReadOnly);
+    stream >> map;
+    socket->deleteLater();
+    emit insertRecord(map);
+    // doRegexMatch();
+    m_buffer.clear();
 }
 
 void ZettaListenerConnection::changeConnectionType(int connectionType)
@@ -55,14 +72,8 @@ void ZettaListenerConnection::changeConnectionType(int connectionType)
     return;
 }
 
-void ZettaListenerConnection::openTcpServer(int portNumber)
+void ZettaListenerConnection::establishTcpServer(int portNumber)
 {
-    if(portNumber < 1000){
-        emit signalMessage("WARNING",QString("Please choose a port number above 1000. You currently chose %1").arg(portNumber));
-        return;
-    }
-    qDebug("Opening Port %d...",portNumber);
-    m_tcpServer = new QTcpServer();
     if(m_tcpServer->listen(QHostAddress::Any, portNumber))
     {
         qDebug("LISTENING ON %d...",m_tcpServer->serverPort());
@@ -70,11 +81,18 @@ void ZettaListenerConnection::openTcpServer(int portNumber)
         m_connectionStatus = 1;
         emit connectionChanged(m_connectionStatus,m_connectionType);
     }
-
+    else
+    {
+        emit appendLog("ZettaLogger Server closed");
+    }
 }
 
 void ZettaListenerConnection::closeTcpServer()
 {
     qDebug("CLOSING TCPSERVER");
     m_tcpServer->close();
+    m_connectionStatus = 0;
+    emit connectionChanged(m_connectionStatus,m_connectionType);
+    emit appendLog("ZettaLogger Server closed");
+    return;
 }

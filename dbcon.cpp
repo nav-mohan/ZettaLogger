@@ -20,10 +20,7 @@ void DbCon::openConnection()
     try
     {
         m_conn->connect(*endpoints.begin(),params);
-        boost::mysql::error_code ec;
-        boost::mysql::diagnostics diag;
-        // m_conn->ping(&ec, &diag);
-        m_conn->ping();
+        prepareStatements();
     }
     catch(const boost::mysql::error_with_diagnostics& err)
     {
@@ -50,6 +47,11 @@ void DbCon::handleStandardException(const std::exception &err)
 
 bool DbCon::connectionStatus()
 {
+    boost::mysql::error_code ec;
+    boost::mysql::diagnostics diag;
+    m_conn->ping(ec, diag);
+    std::cout << "ERROR CODE: " << ec.what() << "\nSERVER MESSAGE : " <<diag.server_message() << "\n";
+
     const char *sql = "SELECT 'Hello World!'";
     m_conn->query(sql,m_result);
     
@@ -72,9 +74,6 @@ bool DbCon::connectionStatus()
     if(strcmp(result_string.c_str(),"Hello World!"))
         return false;
 
-    
-    m_conn->ping();
-
     return true;
 }
 
@@ -82,52 +81,86 @@ void DbCon::countRecords()
 {
     try
     {
-    const char *sql = "SELECT count(*) FROM zettalogger";
-    m_conn->query(sql,m_result);
-    std::cout << "FOUND " << m_result.rows().at(0).at(0) << " ROWS\n";
-        /* code */
+        const char *sql = "SELECT count(*) FROM zettalogger";
+        m_conn->query(sql,m_result);
+        std::cout << "FOUND " << m_result.rows().at(0).at(0) << " ROWS\n";
     }
-    catch(const std::exception& e)
+    catch(const boost::mysql::error_with_diagnostics& err)
     {
-        std::cerr << e.what() << '\n';
+        handleSqlException(err);
     }
-    
+    catch(const std::exception &err)
+    {
+        handleStandardException(err);
+    }
 }
 
 
 void DbCon::prepareStatements()
 {
-    try
-    {
-    m_recordInserStatement = m_conn->prepare_statement(
-        "INSERT INTO zettalogger \
-        (logevent_id, logevent_type, air_date, rw_local, artist_name, album_name, title) \
-        VALUES \
-        (?, ?, ?, ?, ?, ?, ?);"
-    );
-        /* code */
-    }
-    catch(const std::exception& e)
-    {
-        std::cerr << e.what() << '\n';
-    }
-    
-}
+    m_recordInsertStatement = m_conn->prepare_statement("INSERT INTO zettalogger \
+(logevent_id,logevent_type,air_start_time,air_stop_time,air_date,asset_id,asset_type_id,asset_type_name,\
+asset_filename,asset_participant_name,asset_participant_id,asset_sponsor_id,asset_sponsor_name,\
+asset_product_id,asset_product_name,comment,rw_local,rw_cancon,rw_hit,rw_female,rw_indigenous,rw_explicit,rw_release_date,rw_genre,\
+artist_id,artist_name,album_id,album_name,title) \
+VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 
-void DbCon::insertRecord()
+}
+void DbCon::insertRecord(QMap<QString,QString> &map)
 {
     try
     {
-    m_conn->execute_statement(
-        m_recordInserStatement,
-        std::make_tuple(1234,"LIVE","2020-10-10",0,"DRAKE","L0V3rBoi","35y/oCreepyMan"),
-        m_result
-    );        
+        Record rec(map);
+        qDebug("Begin Executing Statement");
+        m_conn->execute_statement(
+            m_recordInsertStatement,
+            std::make_tuple(
+                rec.logevent_id,
+                rec.logevent_type,
+                boost::posix_time::to_iso_extended_string(rec.air_start_time),
+                boost::posix_time::to_iso_extended_string(rec.air_stop_time),
+                boost::gregorian::to_iso_extended_string(rec.air_date),
+                rec.asset_id,
+                rec.asset_type_id,
+                rec.asset_type_name,
+                rec.asset_filename,
+                rec.asset_participant_name,
+                rec.asset_participant_id,
+                rec.asset_sponsor_id,
+                rec.asset_sponsor_name,
+                rec.asset_product_id,
+                rec.asset_product_name,
+                rec.comment,
+                rec.rw_local,
+                rec.rw_cancon,
+                rec.rw_hit,
+                rec.rw_female,
+                rec.rw_indigenous,
+                rec.rw_explicit,
+                boost::gregorian::to_iso_extended_string(rec.rw_release_date),
+                rec.rw_genre,
+                rec.artist_id,
+                rec.artist_name,
+                rec.album_id,
+                rec.album_name,
+                rec.title
+                ),
+            m_result
+        );        
+    qDebug("Done Executing Statement");
+    
     }
-    catch(const std::exception& e)
+    catch(boost::wrapexcept<boost::bad_lexical_cast> &e)
     {
         std::cerr << e.what() << '\n';
     }
-    
-
+    catch(const boost::mysql::error_with_diagnostics& err)
+    {
+        handleSqlException(err);
+    }
+    catch(const std::exception &err)
+    {
+        qDebug("std::exception ");
+        handleStandardException(err);
+    }
 }

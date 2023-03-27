@@ -7,11 +7,15 @@
 #include <QTcpServer>
 #include <QAbstractSocket>
 #include <QSharedMemory>
+#include <QSet>
+#include <QDateTime>
+#include <QMap>
+#include <QDataStream>
 
 #define CONNECTIONTYPE_TCPSERVER 0
 #define CONNECTIONTYPE_SHAREDMEMORY 1
 
-class ZettaListenerConnection : public QIODevice {
+class ZettaListenerConnection : public QObject {
 Q_OBJECT
 
 public:
@@ -20,29 +24,30 @@ public:
 
     QTcpServer *m_tcpServer;// the tcp server will at the very least be used for receiving readyRead signals. 
     QSharedMemory *m_sharedMemory;
-    QByteArray *m_buffer;
+    QByteArray m_buffer;
     int m_connectionType;
     int m_connectionStatus;
+    int m_tcpPortNumber;
+    QSet<QTcpSocket*> m_connectionSet;
 
 public slots:
     void changeConnectionType(int);
-    void openConnection(int);
-    void closeConnection();
+    void newConnection();
+    void closeTcpServer();
+    void establishTcpServer(int port);
 
 private slots:
-    void openTcpServer(int port);
-    void closeTcpServer();
+    void appendToSocketList(QTcpSocket *socket);
+    void readSocket();
+    void deleteSocket();
 
 signals:
     void signalMessage(QString,QString);
     void connectionChanged(bool,int);
-
-protected:
-    qint64 readData(char *data, qint64 maxSize);
-    qint64 writeData(const char *data, qint64 maxSize);
-
-private:
-    int m_tcpPortNumber;
+    void dataReady(QMap<QString,QString>);
+    void appendLog(const QString &str);
+    void alert(const QString& windowTitle, const QString &windowInfo);
+    void insertRecord(QMap<QString,QString>&map);
 };
 
 #endif // ZETTALISTENERCONNECTION_H
