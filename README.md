@@ -1,7 +1,8 @@
-# ZettaLogger
+# QZettaLogger
 * Receives data-stream from ZettaListener over TCP/shared-memory. 
 * MySQL Connector.
-* Web API to query the database 
+* Web API queries database and delivers JSON. 
+* Built with the `Qt Framework` and `Boost Libraries`.
 
 <img src = "QZettaLogger.png" width = 480>
 
