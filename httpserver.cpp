@@ -57,8 +57,8 @@ void HttpServer::appendToSocketList(QTcpSocket *socket)
 
 void HttpServer::readSocket()
 {
-    qDebug() << "Reading " << sender();
     QTcpSocket *socket = reinterpret_cast<QTcpSocket*>(sender());
+    qDebug() << "HttpServer::readSocket " << socket;
     int bytesAvailable = socket->bytesAvailable();
     QByteArray newData = socket->readAll();
     // qDebug() << newData;
@@ -68,7 +68,12 @@ void HttpServer::readSocket()
     if(match.hasMatch())
         dateString = match.captured(1);
     qDebug() << dateString;
+    emit readRecord(socket, dateString);
+}
 
+void HttpServer::deliverRecord(QTcpSocket *socket, QString record)
+{
+    qDebug() << "HttpServer::deliverRecord " << socket << record;
     QString response = "";
     response += "HTTP/1.1 200 OK\r\n";
     response += "Content-Type: text/html; charset=UTF-8\r\n";
@@ -79,9 +84,10 @@ void HttpServer::readSocket()
     response += "Connection: keep-alive\r\n";
     response += "Server: nginx/1.18.0 (Ubuntu)\r\n";
     response += "\r\n";
-    response += "<html>\n";
-    response += "<body>Hello World</body>\n";
-    response += "</html>\n";
+    // response += "<html>\n";
+    // response += "<body>" + record + "</body>\n";
+    response += record + "\n";
+    // response += "</html>\n";
     socket->write(response.toStdString().c_str());
     socket->disconnectFromHost();
 }
@@ -89,6 +95,7 @@ void HttpServer::readSocket()
 void HttpServer::deleteSocket()
 {
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+    qDebug() << "HttpServer::deleteSocket " << socket;
     QSet<QTcpSocket*>::iterator it = m_connectionSet.find(socket);
     if (it != m_connectionSet.end()){
         qDebug() << (QString("INFO :: A client has just left the room %1").arg(socket->socketDescriptor()));

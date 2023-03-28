@@ -1,5 +1,19 @@
 #include "dbcon.h"
 
+DbCon::DbCon()
+{
+    m_ctx = new boost::asio::io_context();
+    boost::asio::ssl::context ssl_ctx(boost::asio::ssl::context::tls_client);
+    m_conn = new boost::mysql::tcp_ssl_connection(*m_ctx, ssl_ctx);
+}
+
+DbCon::~DbCon()
+{
+    if(m_conn != nullptr && connectionStatus())
+        m_conn->close();
+    delete m_ctx;
+    delete m_conn;
+}
 void DbCon::setAuth(std::string username, std::string password, std::string databasename, std::string hostname)
 {
     m_username = "zettalogger_user";
@@ -10,12 +24,9 @@ void DbCon::setAuth(std::string username, std::string password, std::string data
 
 void DbCon::openConnection()
 {
-    boost::asio::io_context ctx;
     boost::mysql::handshake_params params(m_username,m_password,m_databasename);
-    boost::asio::ssl::context ssl_ctx(boost::asio::ssl::context::tls_client);
-    m_conn = new boost::mysql::tcp_ssl_connection(ctx, ssl_ctx);
 
-    boost::asio::ip::tcp::resolver resolver(ctx.get_executor());
+    boost::asio::ip::tcp::resolver resolver(m_ctx->get_executor());
     auto endpoints = resolver.resolve(m_hostname.c_str(), boost::mysql::default_port_string);
     try
     {
@@ -47,11 +58,18 @@ void DbCon::handleStandardException(const std::exception &err)
 
 bool DbCon::connectionStatus()
 {
+    if(m_conn == nullptr) return false;
+
     boost::mysql::error_code ec;
     boost::mysql::diagnostics diag;
     m_conn->ping(ec, diag);
-    std::cout << "ERROR CODE: " << ec.what() << "\nSERVER MESSAGE : " <<diag.server_message() << "\n";
+    if(ec.value() != boost::system::errc::success)
+    {
+        std::cout << "ERROR CODE: " << ec << ":" << ec.what() << "\nSERVER MESSAGE : " <<diag.server_message() << "\n";
+        return false;
+    }
 
+    std::cout << "ALL GOOD!" << ec.value() << "|" << ec.what() << "\nSERVER MESSAGE : " <<diag.server_message() << "\n";
     const char *sql = "SELECT 'Hello World!'";
     m_conn->query(sql,m_result);
     
@@ -105,13 +123,74 @@ asset_product_id,asset_product_name,comment,rw_local,rw_cancon,rw_hit,rw_female,
 artist_id,artist_name,album_id,album_name,title) \
 VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);");
 
+    // m_recordReadStatement = m_conn->prepare_statement("SELECT * FROM zettalogger WHERE air_date = '?';");
+    m_recordReadStatement = m_conn->prepare_statement("SELECT * FROM zettalogger;");
 }
+
+void DbCon::readRecord(QTcpSocket *socket, QString air_date)
+{
+    qDebug() << "Db::Con readRecord()" << socket << air_date;
+    
+    if(m_conn == nullptr || !connectionStatus()) {
+        qDebug("NO CONNECTION TO DATABASE YOU IDIOT!");
+        emit deliverRecord(socket,"Could not establish connection to database");
+        return;
+    }
+
+    try
+    {
+        boost::mysql::results result;
+        // m_conn->execute_statement(m_recordReadStatement, std::make_tuple(air_date.toStdString()), result);
+        const char* sql = "SELECT artist_name,album_name,title FROM zettalogger";
+        m_conn->query(sql, result);
+        qDebug() << "Records ready for deliver" << air_date;
+        std::string resString("[");
+        for (boost::mysql::row_view zettalogs : result.rows())
+        {
+            resString += "{";
+            resString += "\"artist\":";
+            resString += "\"";
+            resString += zettalogs.at(0).as_string();
+            resString += "\"";
+            resString += ",";
+            resString += "\"album\":";
+            resString += "\"";
+            resString += zettalogs.at(1).as_string();
+            resString += "\"";
+            resString += ",";
+            resString += "\"title\":";
+            resString += "\"";
+            resString += zettalogs.at(2).as_string();
+            resString += "\"";
+            resString += "},";
+        }
+        resString += "{}]";
+
+        emit deliverRecord(socket,QString::fromStdString(resString));
+    }
+    catch(boost::wrapexcept<boost::bad_lexical_cast> &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+    catch(const boost::mysql::error_with_diagnostics& err)
+    {
+        handleSqlException(err);
+    }
+    catch(const std::exception &err)
+    {
+        qDebug("std::exception ");
+        handleStandardException(err);
+    }
+}
+
 void DbCon::insertRecord(QMap<QString,QString> &map)
 {
     try
     {
         Record rec(map);
         qDebug("Begin Executing Statement");
+        qDebug() << map;
+        boost::mysql::results result;
         m_conn->execute_statement(
             m_recordInsertStatement,
             std::make_tuple(
@@ -145,7 +224,7 @@ void DbCon::insertRecord(QMap<QString,QString> &map)
                 rec.album_name,
                 rec.title
                 ),
-            m_result
+            result
         );        
     qDebug("Done Executing Statement");
     

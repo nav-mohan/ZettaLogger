@@ -24,6 +24,7 @@ public:
 public slots:
     void newConnection();
     void readSocket();
+    void deliverRecord(QTcpSocket *socket, QString record);
     void deleteSocket();
 
 private:
@@ -32,6 +33,7 @@ private:
 
 signals:
     void connectionChanged(bool connectionStatus);
+    void readRecord(QTcpSocket *socket, QString air_date);
 };
 
 #endif // HTTPSERVER_H

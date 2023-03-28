@@ -49,11 +49,14 @@ void ZettaListenerConnection::deleteSocket()
         m_connectionSet.remove(*it);
     }
     qDebug() << "Deleting " << sender();
-    QMap<QString,QString> map;
+    QVector<QMap<QString,QString>> newRecords;
     QDataStream stream(&m_buffer, QIODevice::ReadOnly);
-    stream >> map;
+    stream >> newRecords;
     socket->deleteLater();
-    emit insertRecord(map);
+    for (int i = 0; i < newRecords.count(); i++)
+    {
+        emit insertRecord(newRecords[i]);
+    }
     // doRegexMatch();
     m_buffer.clear();
 }

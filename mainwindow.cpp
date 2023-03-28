@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(m_zettaListenerConnection,&ZettaListenerConnection::insertRecord,m_dbCon,&DbCon::insertRecord);
 
     connect(m_httpServer,&HttpServer::connectionChanged,this,&MainWindow::httpServerConnectionChanged);
+    connect(m_httpServer,&HttpServer::readRecord,m_dbCon,&DbCon::readRecord);
+    connect(m_dbCon,&DbCon::deliverRecord,m_httpServer,&HttpServer::deliverRecord);
     
     m_ui->plainTextEdit_receivedLogs->setReadOnly(true);
     m_ui->plainTextEdit_receivedLogs->setPlaceholderText("Received Logs:\n");

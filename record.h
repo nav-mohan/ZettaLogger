@@ -44,10 +44,10 @@ struct Record
         logevent_id = map["LogEventID"].toULongLong();
         logevent_type = map["LogEventType"].toStdString();
         
-        temp = map["AirStarttimeLocal"].replace("-","").replace(":","").replace(" ","T").replace("Z","").toStdString();
+        temp = map["AirStarttime"].replace("-","").replace(":","").replace(" ","T").replace("Z","").toStdString();
         air_start_time = boost::posix_time::from_iso_string(temp);
         
-        temp = map["AirStoptimeLocal"].replace("-","").replace(":","").replace(" ","T").replace("Z","").toStdString();
+        temp = map["AirStoptime"].replace("-","").replace(":","").replace(" ","T").replace("Z","").toStdString();
         air_stop_time = boost::posix_time::from_iso_string(temp);
 
         temp = map["AirDate"].replace("-","").toStdString();
